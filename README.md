@@ -1,8 +1,20 @@
-# Customer Registration API
+# 👥 Customer Registration API
 
-A REST API for registering and managing customers and their addresses. It is built with Java, Spring Boot, Spring Data JPA, PostgreSQL, and Flyway.
+A REST API for registering and managing customers and their addresses. It is built with Java, Spring Boot, Spring Data JPA, PostgreSQL, Flyway, and Lombok.
 
-## Features
+## 📚 Contents
+
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Run locally](#-run-locally)
+- [Configuration](#-configuration)
+- [API](#-api)
+- [Errors](#-errors)
+- [API documentation](#-api-documentation)
+- [Tests](#-tests)
+- [Database migration](#-database-migration)
+
+## ✨ Features
 
 - Create, retrieve, list, update, and soft-delete customers.
 - Store one address per customer; an address may be omitted.
@@ -12,16 +24,18 @@ A REST API for registering and managing customers and their addresses. It is bui
 - Expose interactive OpenAPI documentation.
 - Run automated tests against an in-memory H2 database.
 
-CPF is required when creating or updating a customer, but is deliberately not included in API responses to minimize exposure of personal data.
+> 🔒 **Privacy:** CPF is required when creating or updating a customer, but is deliberately not included in API responses to minimize exposure of personal data.
 
-## Requirements
+## 🧰 Requirements
 
 - Java 27
 - Docker with Docker Compose (for the PostgreSQL setup below)
 
 The included Maven Wrapper downloads and runs Maven; a separate Maven installation is not required.
 
-## Run locally
+Lombok generates accessors during compilation. Enable annotation processing and Lombok support in your IDE if generated methods are not recognized.
+
+## 🚀 Run locally
 
 1. Start PostgreSQL:
 
@@ -47,13 +61,13 @@ To stop the database:
 docker compose down
 ```
 
-To also remove its persisted data volume:
+> ⚠️ **Data loss:** The following command also removes the persisted database volume.
 
 ```bash
 docker compose down -v
 ```
 
-## Configuration
+## ⚙️ Configuration
 
 The following environment variables can override the local database settings:
 
@@ -71,7 +85,7 @@ DB_NAME=customers DB_USERNAME=app DB_PASSWORD=change-me docker compose up -d
 DB_URL=jdbc:postgresql://localhost:5432/customers DB_USERNAME=app DB_PASSWORD=change-me ./mvnw spring-boot:run
 ```
 
-## API
+## 🔌 API
 
 All customer endpoints are under `/api/v1/customers` and consume/produce JSON.
 
@@ -120,11 +134,11 @@ Successful responses use a common envelope:
     "id": 1,
     "fullName": "Maria da Silva",
     "email": "maria@example.com",
-    "phoneNumber": "(11) 99999-9999",
+    "phoneNumber": "11999999999",
     "birthDate": "1990-05-20",
     "gender": "FEMALE",
     "address": {
-      "zipCode": "01310-100",
+      "zipCode": "01310100",
       "street": "Avenida Paulista",
       "number": "1000",
       "complement": "Apt 12",
@@ -151,7 +165,7 @@ curl 'http://localhost:8080/api/v1/customers?page=0&size=20'
 
 `PUT /api/v1/customers/{id}` performs a complete update and expects the same request fields as registration. `DELETE /api/v1/customers/{id}` marks the customer as deleted; it does not physically remove the database record. Deleted customers are no longer returned by retrieval, listing, update, or delete endpoints.
 
-## Errors
+## 🚦 Errors
 
 Errors use the same envelope shape with `success: false` and an `errors` array:
 
@@ -178,11 +192,11 @@ Common status codes:
 | `415 Unsupported Media Type` | Request is not sent as JSON |
 | `500 Internal Server Error` | Unexpected server error |
 
-## API documentation
+## 📖 API documentation
 
 With the application running, open the Swagger UI at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). The OpenAPI specification is available at [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs).
 
-## Tests
+## 🧪 Tests
 
 Run the test suite with:
 
@@ -190,8 +204,8 @@ Run the test suite with:
 ./mvnw test
 ```
 
-Tests use an in-memory H2 database and do not require Docker or PostgreSQL.
+Tests use an in-memory H2 database per Spring test context and do not require Docker or PostgreSQL.
 
-## Database migration
+## 🗄️ Database migration
 
 The initial schema is defined in `src/main/resources/db/migration/V1__create_customer_and_address.sql`. Flyway runs this migration automatically on application startup.
