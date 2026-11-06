@@ -172,7 +172,7 @@ class CustomerApiTest {
     }
 
     @Test
-    void deletesCustomerLogically() {
+    void deletesCustomerPhysically() {
         int id = createCustomer("52998224725", "a@example.com");
 
         given().delete(BASE + "/" + id).then()
@@ -183,7 +183,7 @@ class CustomerApiTest {
         given().get(BASE + "/" + id).then().statusCode(404);
         given().delete(BASE + "/" + id).then().statusCode(404);
         given().get(BASE).then().body("data.content", hasSize(0));
-        org.assertj.core.api.Assertions.assertThat(repository.findById((long) id)).isPresent();
+        org.assertj.core.api.Assertions.assertThat(repository.findById((long) id)).isEmpty();
     }
 
     @Test

@@ -68,7 +68,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a customer (soft delete)")
+    @Operation(summary = "Delete a customer")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ApiResponse.ok("Customer successfully deleted.");

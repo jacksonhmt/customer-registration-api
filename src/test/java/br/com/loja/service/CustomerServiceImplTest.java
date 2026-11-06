@@ -119,15 +119,13 @@ class CustomerServiceImplTest {
     }
 
     @Test
-    void deleteIsLogical() {
+    void deleteIsPhysical() {
         Customer existing = new Customer();
         when(repository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(existing));
 
         service.delete(1L);
 
-        assertThat(existing.getDeletedAt()).isNotNull();
-        verify(repository).save(existing);
-        verify(repository, never()).delete(any());
+        verify(repository).delete(existing);
     }
 
     @Test

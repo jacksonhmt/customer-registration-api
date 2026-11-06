@@ -76,8 +76,8 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public void delete(Long id) {
         Customer customer = getActive(id);
-        customer.setDeletedAt(LocalDateTime.now());
-        repository.save(customer);
+        repository.delete(customer);
+        repository.flush();
     }
 
     private Customer getActive(Long id) {
