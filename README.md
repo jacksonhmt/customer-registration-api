@@ -37,21 +37,27 @@ Lombok generates accessors during compilation. Enable annotation processing and 
 
 ## 🚀 Run locally
 
-1. Start PostgreSQL:
+1. Set `DB_PASSWORD` in your environment to the password for your PostgreSQL user. For example, on macOS or Linux:
+
+   ```bash
+   export DB_PASSWORD='<your-database-password>'
+   ```
+
+2. Start PostgreSQL if you don't already have a container listening on port `5432`:
 
    ```bash
    docker compose up -d
    ```
 
-   The compose file creates a PostgreSQL 16 database named `loja` on port `5432`, with default local credentials `loja` / `loja`.
+   The compose file starts PostgreSQL 17 with database `loja` and user `postgres`. If you already started `postgres-loja` with `docker run`, leave it running and skip this step; starting both containers would conflict on port `5432`.
 
-2. Start the API:
+3. Start the API from the same environment:
 
    ```bash
    ./mvnw spring-boot:run
    ```
 
-   On Windows, use `mvnw.cmd spring-boot:run`.
+   On Windows, set `DB_PASSWORD` in your shell and use `mvnw.cmd spring-boot:run`.
 
 The API is available at `http://localhost:8080`. Flyway applies the database schema migration at startup, and Hibernate validates the schema.
 
@@ -60,6 +66,8 @@ To stop the database:
 ```bash
 docker compose down
 ```
+
+This command affects only the Compose-managed container, not a container started separately with `docker run`.
 
 > ⚠️ **Data loss:** The following command also removes the persisted database volume.
 
@@ -74,16 +82,19 @@ The following environment variables can override the local database settings:
 | Variable | Default | Description |
 | --- | --- | --- |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/loja` | JDBC URL for PostgreSQL |
-| `DB_USERNAME` | `loja` | Database username |
-| `DB_PASSWORD` | `loja` | Database password |
+| `DB_USERNAME` | `postgres` | Database username |
+| `DB_PASSWORD` | Required | Database password; use the same value for the application and container |
 | `DB_NAME` | `loja` | Database name used by Docker Compose |
 
 Set the same database credentials for the application and the PostgreSQL container. For example:
 
 ```bash
-DB_NAME=customers DB_USERNAME=app DB_PASSWORD=change-me docker compose up -d
-DB_URL=jdbc:postgresql://localhost:5432/customers DB_USERNAME=app DB_PASSWORD=change-me ./mvnw spring-boot:run
+export DB_PASSWORD='<your-database-password>'
+DB_NAME=customers DB_USERNAME=app docker compose up -d
+DB_URL=jdbc:postgresql://localhost:5432/customers DB_USERNAME=app ./mvnw spring-boot:run
 ```
+
+PostgreSQL initialization settings apply only when the Compose volume is empty. Changing these variables does not update an existing database or user. A volume created with PostgreSQL 16 also requires a database upgrade or migration before it can be used with PostgreSQL 17; back up any data before changing versions.
 
 ## 🔌 API
 

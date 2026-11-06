@@ -1,10 +1,10 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_DB: ${DB_NAME:-loja}
-      POSTGRES_USER: ${DB_USERNAME:-loja}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-loja}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD before starting PostgreSQL}
     ports:
       - "5432:5432"
     volumes:
