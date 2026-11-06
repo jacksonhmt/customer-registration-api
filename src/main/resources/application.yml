@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: customer-registration-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/loja}
+    username: ${DB_USERNAME:loja}
+    password: ${DB_PASSWORD:loja}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never

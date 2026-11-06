@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DB_NAME:-loja}
+      POSTGRES_USER: ${DB_USERNAME:-loja}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-loja}
+    ports:
+      - "5432:5432"
+    volumes:
+      - loja-data:/var/lib/postgresql/data
+
+volumes:
+  loja-data:
