@@ -10,7 +10,11 @@ spring:
     hibernate:
       ddl-auto: validate
   flyway:
-    enabled: true
+    enabled: false
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   jackson:
     deserialization:
       fail-on-unknown-properties: false

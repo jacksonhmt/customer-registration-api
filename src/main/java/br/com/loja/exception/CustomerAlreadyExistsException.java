@@ -7,8 +7,12 @@ public class CustomerAlreadyExistsException extends RuntimeException {
     @Getter
     private final String field;
 
-    public CustomerAlreadyExistsException(String field, String message) {
-        super(message);
+    @Getter
+    private final String messageKey;
+
+    public CustomerAlreadyExistsException(String field, String messageKey) {
+        super(messageKey);
         this.field = field;
+        this.messageKey = messageKey;
     }
 }

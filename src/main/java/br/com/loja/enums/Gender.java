@@ -1,4 +1,4 @@
-package br.com.loja.entity;
+package br.com.loja.enums;
 
 public enum Gender {
     MALE,

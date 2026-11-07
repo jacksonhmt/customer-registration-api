@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.loja.entity.Address;
 import br.com.loja.entity.Customer;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -50,7 +52,7 @@ class CustomerRepositoryTest {
         Customer found = repository.findByIdAndDeletedAtIsNull(c.getId()).orElseThrow();
         assertThat(found.getCreatedAt()).isNotNull();
         assertThat(found.getAddress().getState()).isEqualTo("ES");
-        assertThat(repository.findByCpf("52998224725")).isPresent();
+        assertThat(repository.existsByCpf("52998224725")).isTrue();
         assertThat(repository.existsByEmail("a@example.com")).isTrue();
     }
 

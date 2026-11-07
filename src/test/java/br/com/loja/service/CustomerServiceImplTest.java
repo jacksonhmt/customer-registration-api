@@ -7,9 +7,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import br.com.loja.dto.request.AddressRequest;
-import br.com.loja.dto.request.CustomerRequest;
-import br.com.loja.dto.response.CustomerResponse;
+import br.com.loja.dto.request.AddressRequestDTO;
+import br.com.loja.dto.request.CustomerRequestDTO;
+import br.com.loja.dto.response.CustomerResponseDTO;
 import br.com.loja.entity.Customer;
 import br.com.loja.exception.CustomerAlreadyExistsException;
 import br.com.loja.exception.CustomerNotFoundException;
@@ -37,17 +37,17 @@ class CustomerServiceImplTest {
         service = new CustomerServiceImpl(repository, new CustomerMapper());
     }
 
-    private static CustomerRequest request() {
-        return new CustomerRequest("Maria da Silva", "529.982.247-25", " Maria@Example.com ", "(27) 99999-9999",
+    private static CustomerRequestDTO request() {
+        return new CustomerRequestDTO("Maria da Silva", "529.982.247-25", " Maria@Example.com ", "(27) 99999-9999",
                 null, LocalDate.of(1990, 5, 15), null,
-                new AddressRequest("29101-000", "Avenida Principal", "100", null, "Centro", "Vila Velha", "es"));
+                new AddressRequestDTO("29101-000", "Avenida Principal", "100", null, "Centro", "Vila Velha", "es"));
     }
 
     @Test
     void createNormalizesDataAndPersists() {
         when(repository.saveAndFlush(any(Customer.class))).thenAnswer(i -> i.getArgument(0));
 
-        CustomerResponse response = service.create(request());
+        CustomerResponseDTO response = service.create(request());
 
         ArgumentCaptor<Customer> captor = ArgumentCaptor.forClass(Customer.class);
         verify(repository).saveAndFlush(captor.capture());
@@ -94,9 +94,9 @@ class CustomerServiceImplTest {
         when(repository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(existing));
         when(repository.saveAndFlush(existing)).thenReturn(existing);
 
-        var update = new CustomerRequest("Maria Souza", "52998224725", "maria@example.com", "2732221111",
+        var update = new CustomerRequestDTO("Maria Souza", "52998224725", "maria@example.com", "2732221111",
                 null, LocalDate.of(1990, 5, 15), null, null);
-        CustomerResponse response = service.update(1L, update);
+        CustomerResponseDTO response = service.update(1L, update);
 
         assertThat(response.fullName()).isEqualTo("Maria Souza");
         assertThat(response.address()).isNull();

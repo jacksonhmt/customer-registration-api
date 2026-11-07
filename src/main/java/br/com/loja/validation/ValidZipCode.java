@@ -1,5 +1,6 @@
 package br.com.loja.validation;
 
+import br.com.loja.message.AddressMessages;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.Documented;
@@ -13,7 +14,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidZipCode {
-    String message() default "The ZIP code (CEP) must contain 8 digits.";
+    String message() default AddressMessages.ZIP_CODE_INVALID;
 
     Class<?>[] groups() default {};
 

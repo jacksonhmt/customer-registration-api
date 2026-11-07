@@ -1,5 +1,6 @@
 package br.com.loja.entity;
 
+import br.com.loja.enums.Gender;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

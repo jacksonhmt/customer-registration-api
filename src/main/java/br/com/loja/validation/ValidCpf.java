@@ -1,5 +1,6 @@
 package br.com.loja.validation;
 
+import br.com.loja.message.CustomerMessages;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.Documented;
@@ -13,7 +14,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidCpf {
-    String message() default "The provided CPF is invalid.";
+    String message() default CustomerMessages.CPF_INVALID;
 
     Class<?>[] groups() default {};
 

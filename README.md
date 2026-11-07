@@ -5,18 +5,21 @@ A REST API for registering and managing customers and their addresses. It is bui
 ## 📚 Contents
 
 - [Features](#-features)
+- [Architecture](#-architecture)
 - [Requirements](#-requirements)
 - [Run locally](#-run-locally)
 - [Configuration](#-configuration)
 - [API](#-api)
 - [Errors](#-errors)
+- [Internationalization](#-internationalization)
 - [API documentation](#-api-documentation)
 - [Tests](#-tests)
+- [Continuous integration](#-continuous-integration)
 - [Database migration](#-database-migration)
 
 ## ✨ Features
 
-- Create, retrieve, list, update, and soft-delete customers.
+- Create, retrieve, list, update, and delete customers.
 - Store one address per customer; an address may be omitted.
 - Validate Brazilian CPF, phone numbers, ZIP codes (CEP), and state abbreviations (UF).
 - Prevent duplicate CPF and email registrations.
@@ -25,6 +28,30 @@ A REST API for registering and managing customers and their addresses. It is bui
 - Run automated tests against an in-memory H2 database.
 
 > 🔒 **Privacy:** CPF is required when creating or updating a customer, but is deliberately not included in API responses to minimize exposure of personal data.
+
+## 🏗️ Architecture
+
+The application uses a layered Spring Boot architecture:
+
+```text
+HTTP request
+    ↓
+CustomerController → request DTO validation
+    ↓
+CustomerServiceImpl → business rules and transaction boundaries
+    ↓
+CustomerMapper ↔ Customer / Address entities
+    ↓
+CustomerRepository → Spring Data JPA → PostgreSQL
+```
+
+- **API layer:** `CustomerController` exposes the customer endpoints and accepts validated request DTOs. `GlobalExceptionHandler` converts validation and application exceptions into the common API error response.
+- **Service and mapping layers:** `CustomerServiceImpl` enforces duplicate CPF/email checks and wraps writes in transactions. `CustomerMapper` normalizes Brazilian identifiers and contact data, maps requests to entities, and creates response DTOs that omit CPF.
+- **Persistence layer:** `CustomerRepository` provides Spring Data JPA queries. Flyway creates the schema from `src/main/resources/db/migration`; `Customer` has a one-to-one relationship with `Address`.
+- **Messages and validation:** all user-facing texts live in `messages*.properties` (pt-BR, en-US). `CustomerMessages`, `AddressMessages` and `GeneralMessages` hold the keys, `MessageService` resolves them for the request locale, `InternationalizationConfig` selects the locale from `Accept-Language`, and the `enums` package holds `ErrorCode` (stable error codes) and `Gender`.
+- **Tests:** automated tests use an in-memory H2 database and cover API, persistence, service, entity, and validation behavior.
+
+The schema includes a `deleted_at` column and read queries exclude rows where it is set. However, the current delete service calls `repository.delete`, which physically deletes the customer (and its cascaded address); it does not set `deleted_at`.
 
 ## 🧰 Requirements
 
@@ -59,7 +86,7 @@ Lombok generates accessors during compilation. Enable annotation processing and 
 
    On Windows, set `DB_PASSWORD` in your shell and use `mvnw.cmd spring-boot:run`.
 
-The API is available at `http://localhost:8080`. Flyway applies the database schema migration at startup, and Hibernate validates the schema.
+The API is available at `http://localhost:8080`. Flyway is disabled by default for an existing database; Hibernate validates the schema without creating or changing tables. For a new empty database, enable Flyway as described in [Database migration](#-database-migration).
 
 To stop the database:
 
@@ -85,6 +112,7 @@ The following environment variables can override the local database settings:
 | `DB_USERNAME` | `postgres` | Database username |
 | `DB_PASSWORD` | Required | Database password; use the same value for the application and container |
 | `DB_NAME` | `loja` | Database name used by Docker Compose |
+| `SPRING_FLYWAY_ENABLED` | `false` | Enable Flyway migrations at startup |
 
 Set the same database credentials for the application and the PostgreSQL container. For example:
 
@@ -174,24 +202,34 @@ curl 'http://localhost:8080/api/v1/customers?page=0&size=20'
 
 ### Update and delete
 
-`PUT /api/v1/customers/{id}` performs a complete update and expects the same request fields as registration. `DELETE /api/v1/customers/{id}` marks the customer as deleted; it does not physically remove the database record. Deleted customers are no longer returned by retrieval, listing, update, or delete endpoints.
+`PUT /api/v1/customers/{id}` performs a complete update and expects the same request fields as registration. `DELETE /api/v1/customers/{id}` physically removes the customer and its associated address from the database.
 
 ## 🚦 Errors
 
-Errors use the same envelope shape with `success: false` and an `errors` array:
+Errors use `ApiErrorResponseDTO`. `code` is stable and language-independent; only `message` (and field messages) are translated. `errors` appears only when field details exist.
 
 ```json
 {
   "success": false,
-  "message": "Validation error.",
-  "errors": [
-    {
-      "field": "email",
-      "message": "The provided email is invalid."
-    }
-  ]
+  "code": "CUSTOMER_NOT_FOUND",
+  "message": "Customer not found.",
+  "path": "/api/v1/customers/999"
 }
 ```
+
+Validation error (`400`):
+
+```json
+{
+  "success": false,
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed.",
+  "path": "/api/v1/customers",
+  "errors": [{ "field": "fullName", "message": "Full name is required." }]
+}
+```
+
+Error codes: `CUSTOMER_NOT_FOUND`, `CUSTOMER_ALREADY_EXISTS`, `VALIDATION_ERROR`, `INVALID_REQUEST`, `RESOURCE_NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE`, `INTERNAL_SERVER_ERROR`. Unexpected errors never expose stack traces or internal details.
 
 Common status codes:
 
@@ -202,6 +240,26 @@ Common status codes:
 | `409 Conflict` | CPF or email is already registered |
 | `415 Unsupported Media Type` | Request is not sent as JSON |
 | `500 Internal Server Error` | Unexpected server error |
+
+## 🌍 Internationalization
+
+- **Supported languages:** Portuguese (Brazil) `pt-BR` and English (US) `en-US`.
+- **Default:** `pt-BR` (used when the header is missing or the language is unsupported, e.g. `fr-FR` or `en-GB`).
+- **Selection:** the `Accept-Language` header, via Spring's `AcceptHeaderLocaleResolver`. Lists such as `es-ES,en-US;q=0.8` pick the first supported language. A bare `en` is not matched; send `en-US`.
+
+```bash
+curl -H "Accept-Language: pt-BR" localhost:8080/api/v1/customers/999
+# {"success":false,"code":"CUSTOMER_NOT_FOUND","message":"Cliente não encontrado.","path":"/api/v1/customers/999"}
+
+curl -H "Accept-Language: en-US" localhost:8080/api/v1/customers/999
+# {"success":false,"code":"CUSTOMER_NOT_FOUND","message":"Customer not found.","path":"/api/v1/customers/999"}
+```
+
+Success responses use `ApiResponseDTO<T>`: `{ "success": true, "message": "...", "data": ... }`.
+
+**Add a message key:** add the same key to `messages.properties`, `messages_pt_BR.properties` and `messages_en_US.properties` (a test checks they match), then reference it from `CustomerMessages`, `AddressMessages` or `GeneralMessages` (use `{key}` form in annotations, `MessageService.getMessage(key)` in code).
+
+**Add a language:** create `messages_<lang>_<COUNTRY>.properties` with all keys (UTF-8) and add the locale to `InternationalizationConfig`.
 
 ## 📖 API documentation
 
@@ -217,6 +275,18 @@ Run the test suite with:
 
 Tests use an in-memory H2 database per Spring test context and do not require Docker or PostgreSQL.
 
+## 🔄 Continuous integration
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pushes, pull requests, and manual dispatch. It uses Java 27 and the Maven Wrapper to compile, run tests, package the application, and execute Maven's `verify` phase. Tests use the H2 test profile, so CI does not need PostgreSQL credentials. Test reports are uploaded when available, and a successful build uploads the application JAR.
+
 ## 🗄️ Database migration
 
-The initial schema is defined in `src/main/resources/db/migration/V1__create_customer_and_address.sql`. Flyway runs this migration automatically on application startup.
+The initial schema is defined in `src/main/resources/db/migration/V1__create_customer_and_address.sql`. Flyway is disabled by default so an existing database is not migrated at startup. Hibernate still validates that its schema matches the entities.
+
+For a new, empty database, enable Flyway when starting the API:
+
+```bash
+SPRING_FLYWAY_ENABLED=true ./mvnw spring-boot:run
+```
+
+Enabling Flyway on an existing database requires its migration history to be reconciled first. Back up the database and verify the schema before baselining; Flyway's baseline records a version but does not update tables. Future migrations will not run while Flyway is disabled. The test profile enables Flyway for its separate in-memory database.

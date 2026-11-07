@@ -36,6 +36,11 @@ class BrazilianDataTest {
         assertThat(BrazilianData.normalizePhone("+55 (27) 99999-9999")).isEqualTo("27999999999");
     }
 
+    @org.junit.jupiter.api.Test
+    void normalizesNullPhoneWithoutThrowing() {
+        assertThat(BrazilianData.normalizePhone(null)).isNull();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"29101000", "29101-000"})
     void acceptsValidZipCode(String zip) {

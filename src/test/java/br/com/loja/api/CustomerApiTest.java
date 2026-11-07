@@ -14,6 +14,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,13 @@ class CustomerApiTest {
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
+        RestAssured.requestSpecification = given().header("Accept-Language", "en-US");
         repository.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
+        RestAssured.reset();
     }
 
     private static Map<String, Object> address() {
@@ -112,8 +119,7 @@ class CustomerApiTest {
                 .statusCode(404)
                 .body("success", equalTo(false))
                 .body("message", equalTo("Customer not found."))
-                .body("errors[0].field", equalTo("id"))
-                .body("errors[0].message", equalTo("No customer was found with the provided ID."));
+                .body("code", equalTo("CUSTOMER_NOT_FOUND"));
     }
 
     @Test
@@ -134,7 +140,7 @@ class CustomerApiTest {
 
     @Test
     void rejectsInvalidPaginationParameters() {
-        given().queryParam("size", 0).get(BASE).then().statusCode(400).body("message", equalTo("Validation error."));
+        given().queryParam("size", 0).get(BASE).then().statusCode(400).body("message", equalTo("Validation failed."));
         given().queryParam("size", 101).get(BASE).then().statusCode(400);
         given().queryParam("page", "abc").get(BASE).then().statusCode(400).body("message", equalTo("Invalid request."));
     }
@@ -203,7 +209,7 @@ class CustomerApiTest {
     void reportsMissingRequiredFields() {
         post(new HashMap<>()).statusCode(400)
                 .body("success", equalTo(false))
-                .body("message", equalTo("Validation error."))
+                .body("message", equalTo("Validation failed."))
                 .body("errors.field", org.hamcrest.Matchers.hasItems("fullName", "cpf", "email", "phoneNumber", "birthDate"))
                 .body("errors.find { it.field == 'fullName' }.message", equalTo("Full name is required."));
     }

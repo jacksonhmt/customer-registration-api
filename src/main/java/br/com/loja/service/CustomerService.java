@@ -1,19 +1,19 @@
 package br.com.loja.service;
 
-import br.com.loja.dto.request.CustomerRequest;
-import br.com.loja.dto.response.CustomerResponse;
+import br.com.loja.dto.request.CustomerRequestDTO;
+import br.com.loja.dto.response.CustomerResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface CustomerService {
 
-    CustomerResponse create(CustomerRequest request);
+    CustomerResponseDTO create(CustomerRequestDTO request);
 
-    CustomerResponse findById(Long id);
+    CustomerResponseDTO findById(Long id);
 
-    Page<CustomerResponse> findAll(Pageable pageable);
+    Page<CustomerResponseDTO> findAll(Pageable pageable);
 
-    CustomerResponse update(Long id, CustomerRequest request);
+    CustomerResponseDTO update(Long id, CustomerRequestDTO request);
 
     /** Logical deletion: the record is kept so future sales can still reference it. */
     void delete(Long id);

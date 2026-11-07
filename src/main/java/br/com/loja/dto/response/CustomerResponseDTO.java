@@ -1,13 +1,13 @@
 package br.com.loja.dto.response;
 
-import br.com.loja.entity.Gender;
+import br.com.loja.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /** CPF is intentionally not exposed in responses (LGPD data minimization). */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record CustomerResponse(
+public record CustomerResponseDTO(
         Long id,
         String fullName,
         String email,
@@ -15,7 +15,7 @@ public record CustomerResponse(
         String additionalPhone,
         LocalDate birthDate,
         Gender gender,
-        AddressResponse address,
+        AddressResponseDTO address,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

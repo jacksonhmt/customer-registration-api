@@ -1,9 +1,11 @@
 package br.com.loja.controller;
 
-import br.com.loja.dto.request.CustomerRequest;
-import br.com.loja.dto.response.ApiResponse;
-import br.com.loja.dto.response.CustomerResponse;
-import br.com.loja.dto.response.PageResponse;
+import br.com.loja.dto.request.CustomerRequestDTO;
+import br.com.loja.dto.response.ApiResponseDTO;
+import br.com.loja.dto.response.CustomerResponseDTO;
+import br.com.loja.dto.response.PageResponseDTO;
+import br.com.loja.message.CustomerMessages;
+import br.com.loja.message.MessageService;
 import br.com.loja.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,45 +34,47 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
     private final CustomerService service;
+    private final MessageService messages;
 
-    public CustomerController(CustomerService service) {
+    public CustomerController(CustomerService service, MessageService messages) {
         this.service = service;
+        this.messages = messages;
     }
 
     @PostMapping
     @Operation(summary = "Register a customer")
-    public ResponseEntity<ApiResponse<CustomerResponse>> create(@Valid @RequestBody CustomerRequest request) {
+    public ResponseEntity<ApiResponseDTO<CustomerResponseDTO>> create(@Valid @RequestBody CustomerRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Customer successfully registered.", service.create(request)));
+                .body(ApiResponseDTO.ok(messages.getMessage(CustomerMessages.CREATED), service.create(request)));
     }
 
     @GetMapping
     @Operation(summary = "List customers (paginated)")
-    public ApiResponse<PageResponse<CustomerResponse>> findAll(
-            @RequestParam(defaultValue = "0") @Min(value = 0, message = "Page must be zero or greater.") int page,
+    public ApiResponseDTO<PageResponseDTO<CustomerResponseDTO>> findAll(
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = CustomerMessages.PAGE_MINIMUM) int page,
             @RequestParam(defaultValue = "20")
-            @Min(value = 1, message = "Size must be between 1 and 100.")
-            @Max(value = 100, message = "Size must be between 1 and 100.") int size) {
+            @Min(value = 1, message = CustomerMessages.PAGE_SIZE)
+            @Max(value = 100, message = CustomerMessages.PAGE_SIZE) int size) {
         var result = service.findAll(PageRequest.of(page, size, Sort.by("id")));
-        return ApiResponse.ok("Customers successfully retrieved.", PageResponse.from(result));
+        return ApiResponseDTO.ok(messages.getMessage(CustomerMessages.LIST_RETRIEVED), PageResponseDTO.from(result));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Retrieve a customer by ID")
-    public ApiResponse<CustomerResponse> findById(@PathVariable Long id) {
-        return ApiResponse.ok("Customer successfully retrieved.", service.findById(id));
+    public ApiResponseDTO<CustomerResponseDTO> findById(@PathVariable Long id) {
+        return ApiResponseDTO.ok(messages.getMessage(CustomerMessages.RETRIEVED), service.findById(id));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a customer (complete update)")
-    public ApiResponse<CustomerResponse> update(@PathVariable Long id, @Valid @RequestBody CustomerRequest request) {
-        return ApiResponse.ok("Customer successfully updated.", service.update(id, request));
+    public ApiResponseDTO<CustomerResponseDTO> update(@PathVariable Long id, @Valid @RequestBody CustomerRequestDTO request) {
+        return ApiResponseDTO.ok(messages.getMessage(CustomerMessages.UPDATED), service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a customer")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public ApiResponseDTO<Void> delete(@PathVariable Long id) {
         service.delete(id);
-        return ApiResponse.ok("Customer successfully deleted.");
+        return ApiResponseDTO.ok(messages.getMessage(CustomerMessages.DELETED));
     }
 }
