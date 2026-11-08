@@ -36,9 +36,9 @@ jobs:
           path: target/surefire-reports/
           if-no-files-found: ignore
 
-      - name: Upload application JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: application-jar
-          path: target/*.jar
-          if-no-files-found: error
+  automation:
+    name: API acceptance tests
+    needs: build
+    uses: jacksonhmt/customer-registration-api-test/.github/workflows/tests.yml@main
+    with:
+      backend_ref: ${{ github.sha }}

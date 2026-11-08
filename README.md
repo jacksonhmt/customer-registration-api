@@ -277,7 +277,11 @@ Tests use an in-memory H2 database per Spring test context and do not require Do
 
 ## 🔄 Continuous integration
 
-The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pushes, pull requests, and manual dispatch. It uses Java 27 and the Maven Wrapper to compile, run tests, package the application, and execute Maven's `verify` phase. Tests use the H2 test profile, so CI does not need PostgreSQL credentials. Test reports are uploaded when available, and a successful build uploads the application JAR.
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pushes, pull requests, and manual dispatch. It uses Java 27 and the Maven Wrapper to compile, run tests, package the application, and execute Maven's `verify` phase. Tests use the H2 test profile, so CI does not need PostgreSQL credentials. Test reports are uploaded when available.
+
+After the backend build succeeds, CI calls the reusable workflow `.github/workflows/tests.yml` on the `main` branch of [`customer-registration-api-test`](https://github.com/jacksonhmt/customer-registration-api-test), passing the triggering backend commit as `backend_ref`. That workflow must declare a required string input named `backend_ref` under `workflow_call` and check out that exact backend revision. For pull requests, GitHub normally supplies the synthetic merge commit as `github.sha`.
+
+The reusable workflow must be present on the automation repository's `main` branch and accessible to this repository before CI can run successfully. If either repository is private, configure GitHub Actions access and checkout credentials as needed. Its automation environment should use a temporary PostgreSQL database and enable Flyway there; it must not connect to a developer's database. The acceptance tests must match the API response envelope and must not expect CPF in the response.
 
 ## 🗄️ Database migration
 
